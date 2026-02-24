@@ -16,7 +16,7 @@ from core.nakshatra import get_nakshatra
 router = APIRouter(prefix="/dasha", tags=["dasha"])
 
 
-@router.post("/", response_model=DashaSequence)
+@router.post("", response_model=DashaSequence)
 async def calculate_dasha(birth_data: BirthData):
     """
     Calculate Vimshottari Dasha sequence from birth data

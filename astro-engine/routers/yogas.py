@@ -7,7 +7,7 @@ from core.yoga_rules import detect_yogas
 router = APIRouter(prefix="/yogas", tags=["yogas"])
 
 
-@router.post("/", response_model=List[Yoga])
+@router.post("", response_model=List[Yoga])
 async def detect_chart_yogas(chart_data: ChartData):
     """
     Detect all yogas from chart data

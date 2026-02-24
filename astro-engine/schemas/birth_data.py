@@ -5,12 +5,13 @@ from datetime import datetime, date, time
 
 class BirthData(BaseModel):
     """Birth information for chart calculation"""
-    name: str
+    name: Optional[str] = "Unknown"
     birth_date: date
     birth_time: time
     latitude: float
     longitude: float
     timezone: str = "Asia/Kolkata"
+    ayanamsha: str = "lahiri"  # lahiri, raman, krishnamurti
 
 
 class Planet(BaseModel):

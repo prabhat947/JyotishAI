@@ -15,7 +15,7 @@ from core.ashtakavarga import calc_ashtakavarga
 router = APIRouter(prefix="/chart", tags=["chart"])
 
 
-@router.post("/", response_model=ChartData)
+@router.post("", response_model=ChartData)
 async def calculate_chart(birth_data: BirthData):
     """
     Calculate complete birth chart from birth data
