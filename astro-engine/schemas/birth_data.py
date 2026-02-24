@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date, time
 
 
@@ -61,7 +61,7 @@ class DashaPeriod(BaseModel):
 class DashaSequence(BaseModel):
     """Complete dasha sequence"""
     birth_date: datetime
-    balance_at_birth: Dict[str, float]  # Remaining years in birth nakshatra lord's dasha
+    balance_at_birth: Dict[str, Any]  # {nakshatra_lord: str, balance_years: float, nakshatra_name: str}
     periods: List[DashaPeriod]
 
 
