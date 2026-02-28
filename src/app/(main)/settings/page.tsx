@@ -56,7 +56,7 @@ export default function SettingsPage() {
           ayanamsha: data.ayanamsha || DEFAULT_PREFS.ayanamsha,
           chart_style: data.chart_style || DEFAULT_PREFS.chart_style,
           default_language: data.default_language || DEFAULT_PREFS.default_language,
-          preferred_provider: data.preferred_provider || DEFAULT_PREFS.preferred_provider,
+          preferred_provider: (data.preferred_provider as LLMProvider) || DEFAULT_PREFS.preferred_provider,
           preferred_model: data.preferred_model || DEFAULT_PREFS.preferred_model,
           alert_enabled: data.alert_enabled ?? DEFAULT_PREFS.alert_enabled,
           alert_orb: data.alert_orb ?? DEFAULT_PREFS.alert_orb,
