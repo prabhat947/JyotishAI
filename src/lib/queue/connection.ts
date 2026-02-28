@@ -8,9 +8,10 @@
 
 import IORedis from "ioredis";
 
+// Prefer REDIS_URL (local/Docker) over UPSTASH_REDIS_URL (cloud, costly for BullMQ)
 const REDIS_URL =
-  process.env.UPSTASH_REDIS_URL ||
   process.env.REDIS_URL ||
+  process.env.UPSTASH_REDIS_URL ||
   "redis://localhost:6379";
 
 // Detect Upstash (requires TLS) or rediss:// protocol

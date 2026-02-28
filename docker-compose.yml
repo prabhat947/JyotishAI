@@ -18,10 +18,12 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - ASTRO_ENGINE_URL=http://astro-engine:8000
-      - UPSTASH_REDIS_URL=${UPSTASH_REDIS_URL}
+      - REDIS_URL=redis://redis:6379
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     depends_on:
       astro-engine:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -52,10 +54,25 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - ASTRO_ENGINE_URL=http://astro-engine:8000
-      - UPSTASH_REDIS_URL=${UPSTASH_REDIS_URL}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       astro-engine:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
-volumes: {}
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 50mb --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis_data:
