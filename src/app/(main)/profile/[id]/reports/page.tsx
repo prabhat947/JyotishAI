@@ -63,7 +63,7 @@ export default function ProfileReportsPage() {
 
       const { data } = await supabase
         .from('user_preferences')
-        .select('preferred_provider, preferred_model, default_language')
+        .select('*')
         .eq('user_id', user.id)
         .single();
 
