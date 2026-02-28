@@ -315,6 +315,7 @@ export type Database = {
           house_system: string | null
           id: string
           preferred_model: string | null
+          preferred_provider: string | null
           updated_at: string | null
           user_id: string
           whatsapp_digest_enabled: boolean | null
@@ -334,6 +335,7 @@ export type Database = {
           house_system?: string | null
           id?: string
           preferred_model?: string | null
+          preferred_provider?: string | null
           updated_at?: string | null
           user_id: string
           whatsapp_digest_enabled?: boolean | null
@@ -353,6 +355,7 @@ export type Database = {
           house_system?: string | null
           id?: string
           preferred_model?: string | null
+          preferred_provider?: string | null
           updated_at?: string | null
           user_id?: string
           whatsapp_digest_enabled?: boolean | null
