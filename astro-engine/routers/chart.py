@@ -2,6 +2,11 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from typing import List
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
 from schemas.birth_data import (
     BirthData, ChartData, Planet, House, TransitData,
     TransitVsNatalData, TransitAspect
@@ -30,10 +35,11 @@ async def calculate_chart(birth_data: BirthData):
         # Combine date and time
         birth_datetime = datetime.combine(birth_data.birth_date, birth_data.birth_time)
 
-        # Calculate Julian Day
-        # Assuming IST (UTC+5:30) as default
-        utc_offset = 5.5
-        jd = calculator.calc_julian_day(birth_datetime, utc_offset)
+        # Calculate Julian Day using actual timezone from birth data
+        tz = ZoneInfo(birth_data.timezone)
+        birth_dt_aware = birth_datetime.replace(tzinfo=tz)
+        utc_offset_hours = birth_dt_aware.utcoffset().total_seconds() / 3600
+        jd = calculator.calc_julian_day(birth_datetime, utc_offset_hours)
 
         # Get ayanamsha
         ayanamsha = calculator.get_ayanamsha(jd)

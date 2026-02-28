@@ -8,29 +8,36 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - ASTRO_ENGINE_URL=http://astro-engine:8000
       - REDIS_URL=redis://redis:6379
-    env_file:
-      - ./web/.env.local
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     depends_on:
-      - astro-engine
-      - redis
-    volumes:
-      - ./web:/app
-      - /app/node_modules
-      - /app/.next
+      astro-engine:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
 
   astro-engine:
     build:
       context: ./astro-engine
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./astro-engine:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    restart: unless-stopped
 
   worker:
     build:
@@ -38,22 +45,30 @@ services:
       dockerfile: Dockerfile.worker
     environment:
       - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - ASTRO_ENGINE_URL=http://astro-engine:8000
-    env_file:
-      - ./web/.env.local
+      - REDIS_URL=redis://redis:6379
     depends_on:
-      - redis
-      - astro-engine
-    command: node dist/workers/index.js
+      redis:
+        condition: service_started
+      astro-engine:
+        condition: service_healthy
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   redis_data:

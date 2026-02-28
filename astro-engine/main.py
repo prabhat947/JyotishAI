@@ -1,22 +1,27 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+import os
 
 from routers import chart, dasha, yogas, pdf
+
+# Environment configuration
+is_production = os.getenv("ENVIRONMENT", "development") == "production"
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 
 # Create FastAPI app
 app = FastAPI(
     title="JyotishAI Astro Engine",
     description="Vedic Astrology Calculation Engine using Swiss Ephemeris",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
 )
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to specific origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,17 +37,20 @@ app.include_router(pdf.router)
 @app.get("/")
 async def root():
     """Root endpoint - API info"""
+    endpoints = {
+        "chart": "/chart",
+        "dasha": "/dasha",
+        "yogas": "/yogas",
+        "pdf": "/pdf",
+    }
+    if not is_production:
+        endpoints["docs"] = "/docs"
+
     return {
         "name": "JyotishAI Astro Engine",
         "version": "1.0.0",
         "description": "Vedic Astrology Calculation API",
-        "endpoints": {
-            "chart": "/chart",
-            "dasha": "/dasha",
-            "yogas": "/yogas",
-            "pdf": "/pdf",
-            "docs": "/docs"
-        }
+        "endpoints": endpoints
     }
 
 

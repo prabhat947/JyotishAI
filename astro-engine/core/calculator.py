@@ -193,21 +193,16 @@ def get_planet_dignity(planet_name: str, longitude: float) -> str:
     degree = get_degree_in_sign(longitude)
     lord = SIGN_LORDS[sign]
 
-    # Check exaltation
+    # Check exaltation (planet anywhere in exaltation sign is exalted per Vedic rules)
     if planet_name in EXALTATION:
         exalt_sign, exalt_degree = EXALTATION[planet_name]
         if sign == exalt_sign:
-            # Within 1° of exact exaltation degree = exalted
-            if abs(degree - exalt_degree) < 1.0 or abs(degree - exalt_degree) > 29.0:
-                return 'exalted'
-            return 'exalted'  # In exaltation sign
+            return 'exalted'
 
-    # Check debilitation
+    # Check debilitation (planet anywhere in debilitation sign is debilitated)
     if planet_name in DEBILITATION:
         debil_sign, debil_degree = DEBILITATION[planet_name]
         if sign == debil_sign:
-            if abs(degree - debil_degree) < 1.0 or abs(degree - debil_degree) > 29.0:
-                return 'debilitated'
             return 'debilitated'
 
     # Check own sign

@@ -14,6 +14,7 @@ class YogaDetector:
     def detect_all(self) -> List[Yoga]:
         """Run all yoga detection rules"""
         self.yogas_detected = []
+        self._viparita_detected = set()
 
         # Raj Yogas (Royal combinations)
         self._detect_gaja_kesari()
@@ -261,33 +262,55 @@ class YogaDetector:
                     dusthana_lords.append(lord)
 
         if len(dusthana_lords) >= 2:
-            self.yogas_detected.append(Yoga(
-                name='Viparita Raja Yoga',
-                type='raj',
-                description='Lords of dusthanas in dusthanas. Success from adversity.',
-                strength='moderate',
-                planets_involved=dusthana_lords,
-                houses_involved=[self._get_planet_house(p) for p in dusthana_lords],
-                classical_source='BPHS',
-                benefic=True
-            ))
-
-    def _detect_lakshmi_yoga(self):
-        """Lakshmi Yoga: Lord of 9th strong in kendra/trikona with Venus"""
-        lord_9 = self._get_house_lord(9)
-        if lord_9 and lord_9 in self.planets:
-            house_9th_lord = self._get_planet_house(lord_9)
-            if house_9th_lord in [1, 4, 5, 7, 9, 10]:
+            # Deduplicate: use frozenset of planets as key to avoid duplicate detections
+            combo_key = frozenset(dusthana_lords)
+            if not hasattr(self, '_viparita_detected'):
+                self._viparita_detected = set()
+            if combo_key not in self._viparita_detected:
+                self._viparita_detected.add(combo_key)
                 self.yogas_detected.append(Yoga(
-                    name='Lakshmi Yoga',
-                    type='dhana',
-                    description='Lord of 9th in kendra/trikona. Brings wealth and prosperity.',
+                    name='Viparita Raja Yoga',
+                    type='raj',
+                    description='Lords of dusthanas in dusthanas. Success from adversity.',
                     strength='moderate',
-                    planets_involved=[lord_9],
-                    houses_involved=[house_9th_lord],
-                    classical_source='Classical texts',
+                    planets_involved=list(combo_key),
+                    houses_involved=[self._get_planet_house(p) for p in combo_key],
+                    classical_source='BPHS',
                     benefic=True
                 ))
+
+    def _detect_lakshmi_yoga(self):
+        """Lakshmi Yoga: Lord of 9th strong in kendra/trikona AND Venus in own/exalted sign"""
+        lord_9 = self._get_house_lord(9)
+        venus = self.planets.get('Venus')
+        if not (lord_9 and lord_9 in self.planets and venus):
+            return
+
+        house_9th_lord = self._get_planet_house(lord_9)
+
+        # Condition 1: 9th lord in kendra or trikona
+        if house_9th_lord not in [1, 4, 5, 7, 9, 10]:
+            return
+
+        # Condition 2: Venus must be in own sign (Taurus, Libra) or exalted (Pisces)
+        venus_sign = venus.sign
+        if venus_sign not in ['Taurus', 'Libra', 'Pisces']:
+            return
+
+        planets_involved = [lord_9]
+        if lord_9 != 'Venus':
+            planets_involved.append('Venus')
+
+        self.yogas_detected.append(Yoga(
+            name='Lakshmi Yoga',
+            type='dhana',
+            description='Lord of 9th in kendra/trikona with Venus in own/exalted sign. Brings wealth and prosperity.',
+            strength='strong',
+            planets_involved=planets_involved,
+            houses_involved=[house_9th_lord, self._get_planet_house('Venus')],
+            classical_source='Classical texts',
+            benefic=True
+        ))
 
     def _detect_kubera_yoga(self):
         """Kubera Yoga: Lord of ascendant and 2nd house strong"""
@@ -308,14 +331,21 @@ class YogaDetector:
                 ))
 
     def _detect_budha_aditya_yoga(self):
-        """Budha Aditya Yoga: Sun and Mercury conjunct"""
-        if self._are_planets_conjunct('Sun', 'Mercury', orb=15.0):
+        """Budha Aditya Yoga: Sun and Mercury in close conjunction (within 8 degrees)"""
+        if self._are_planets_conjunct('Sun', 'Mercury', orb=8.0):
             sun_house = self._get_planet_house('Sun')
+            # Determine strength based on proximity
+            sun = self.planets['Sun']
+            mercury = self.planets['Mercury']
+            diff = abs(sun.longitude - mercury.longitude)
+            if diff > 180:
+                diff = 360 - diff
+            strength = 'strong' if diff <= 3.0 else 'moderate'
             self.yogas_detected.append(Yoga(
                 name='Budha Aditya Yoga',
                 type='knowledge',
-                description='Sun-Mercury conjunction. Grants intelligence and communication skills.',
-                strength='moderate',
+                description='Sun-Mercury close conjunction. Grants intelligence and communication skills.',
+                strength=strength,
                 planets_involved=['Sun', 'Mercury'],
                 houses_involved=[sun_house],
                 classical_source='Classical texts',
@@ -416,27 +446,32 @@ class YogaDetector:
                 break
 
     def _detect_adhi_yoga(self):
-        """Adhi Yoga: Benefics in 6th, 7th, 8th from Moon"""
+        """Adhi Yoga: Benefics in ALL of 6th, 7th, AND 8th from Moon"""
         moon_house = self._get_planet_house('Moon')
         benefics = ['Jupiter', 'Venus', 'Mercury']
 
-        adhi_houses = [
-            (moon_house + 5) % 12 + 1,
-            (moon_house + 6) % 12 + 1,
-            (moon_house + 7) % 12 + 1
-        ]
+        house_6 = (moon_house + 5) % 12 + 1
+        house_7 = (moon_house + 6) % 12 + 1
+        house_8 = (moon_house + 7) % 12 + 1
+        adhi_houses = [house_6, house_7, house_8]
 
+        # Classical definition requires benefics in ALL THREE houses
         benefics_present = []
+        houses_with_benefics = set()
         for benefic in benefics:
-            if self._get_planet_house(benefic) in adhi_houses:
+            benefic_house = self._get_planet_house(benefic)
+            if benefic_house in adhi_houses:
                 benefics_present.append(benefic)
+                houses_with_benefics.add(benefic_house)
 
-        if len(benefics_present) >= 1:
+        # All three houses (6th, 7th, 8th from Moon) must have at least one benefic
+        if len(houses_with_benefics) == 3:
+            strength = 'strong' if len(benefics_present) == 3 else 'moderate'
             self.yogas_detected.append(Yoga(
                 name='Adhi Yoga',
                 type='raj',
-                description='Benefics in 6th/7th/8th from Moon. Leadership qualities.',
-                strength='moderate',
+                description='Benefics in all of 6th, 7th, and 8th from Moon. Powerful leadership qualities.',
+                strength=strength,
                 planets_involved=benefics_present,
                 houses_involved=adhi_houses,
                 classical_source='BPHS',
@@ -488,23 +523,42 @@ class YogaDetector:
             ))
 
     def _detect_parvata_yoga(self):
-        """Parvata Yoga: Benefics in kendra and lord of lagna or 6th/8th strong"""
+        """Parvata Yoga: Lagna lord and 12th lord in kendra/trikona, AND benefics in kendras"""
         benefics = ['Jupiter', 'Venus', 'Mercury']
         kendras = [1, 4, 7, 10]
+        trikonas = [1, 5, 9]
+        kendra_trikona = list(set(kendras + trikonas))  # [1, 4, 5, 7, 9, 10]
 
+        # Condition 1: Lagna lord in kendra or trikona
+        lord_1 = self._get_house_lord(1)
+        lord_12 = self._get_house_lord(12)
+        if not (lord_1 and lord_1 in self.planets and lord_12 and lord_12 in self.planets):
+            return
+
+        lord_1_house = self._get_planet_house(lord_1)
+        lord_12_house = self._get_planet_house(lord_12)
+
+        lords_in_kendra_trikona = (
+            lord_1_house in kendra_trikona and lord_12_house in kendra_trikona
+        )
+        if not lords_in_kendra_trikona:
+            return
+
+        # Condition 2: Benefics must occupy kendras (at least 2)
         benefics_in_kendra = []
         for benefic in benefics:
             if self._get_planet_house(benefic) in kendras:
                 benefics_in_kendra.append(benefic)
 
-        if len(benefics_in_kendra) >= 1:
+        if len(benefics_in_kendra) >= 2:
+            all_involved = list(set([lord_1, lord_12] + benefics_in_kendra))
             self.yogas_detected.append(Yoga(
                 name='Parvata Yoga',
                 type='raj',
-                description='Benefics in kendras. Fame and authority.',
+                description='Lagna and 12th lords in kendra/trikona with benefics in kendras. Fame and authority.',
                 strength='moderate',
-                planets_involved=benefics_in_kendra,
-                houses_involved=[self._get_planet_house(b) for b in benefics_in_kendra],
+                planets_involved=all_involved,
+                houses_involved=[self._get_planet_house(p) for p in all_involved],
                 classical_source='Classical texts',
                 benefic=True
             ))
