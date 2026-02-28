@@ -1,0 +1,33 @@
+# Git
+.git/
+.gitmodules
+
+# Python microservice (separate Docker build)
+astro-engine/
+
+# Node
+node_modules/
+.next/
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation (not needed in image)
+docs/
+*.md
+!README.md
+
+# Tests & snapshots
+snaps/
+tests/
+__tests__/
+
+# OS
+.DS_Store
+Thumbs.db

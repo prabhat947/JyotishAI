@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 217 33% 92%;
+    --card: 222 47% 11%;
+    --card-foreground: 217 33% 92%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 217 33% 92%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 262 83% 58%;
+    --secondary-foreground: 217 33% 92%;
+    --muted: 215 25% 27%;
+    --muted-foreground: 217 10% 64%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 217 33% 92%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 217 33% 92%;
+    --border: 222 24% 30%;
+    --input: 222 24% 30%;
+    --ring: 45 93% 47%;
+    --radius: 0.5rem;
+    --chart-1: 25 91% 55%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 173 58% 39%;
+    --chart-4: 198 70% 50%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-md;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground;
+}
+
+/* Star field animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.star {
+  animation: twinkle 3s infinite;
+}
+
+/* Glassmorphism */
+.glass {
+  @apply bg-card/50 backdrop-blur-md border border-border/50;
+}
+
+/* Planet colors */
+.planet-sun { @apply text-orange-400; }
+.planet-moon { @apply text-slate-200; }
+.planet-mars { @apply text-red-500; }
+.planet-mercury { @apply text-green-400; }
+.planet-jupiter { @apply text-yellow-400; }
+.planet-venus { @apply text-pink-400; }
+.planet-saturn { @apply text-blue-400; }
+.planet-rahu { @apply text-purple-500; }
+.planet-ketu { @apply text-purple-300; }
