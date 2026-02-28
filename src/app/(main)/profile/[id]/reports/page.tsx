@@ -4,8 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Download, Eye, RefreshCw, Loader2, Globe, Languages } from 'lucide-react';
+import { ArrowLeft, Download, Eye, RefreshCw, Loader2, Globe } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/client';
+import ModelSelector, { type ModelSelection } from '@/components/model-selector';
+import { DEFAULT_PROVIDER, DEFAULT_MODEL } from '@/lib/llm/constants';
+import type { LLMProvider } from '@/lib/llm/constants';
 import type { ReportType, Language } from '@/types/astro';
 
 const REPORT_TYPES: {
@@ -44,10 +47,40 @@ export default function ProfileReportsPage() {
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<Language>('en');
-  const [model, setModel] = useState<'claude' | 'gemini'>('claude');
+  const [modelSelection, setModelSelection] = useState<ModelSelection>({
+    provider: DEFAULT_PROVIDER,
+    model: DEFAULT_MODEL,
+  });
   const [generatingType, setGeneratingType] = useState<ReportType | null>(null);
   const [streamContent, setStreamContent] = useState('');
   const [profileName, setProfileName] = useState('');
+
+  // Load user preferences on mount
+  useEffect(() => {
+    async function loadPrefs() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('user_preferences')
+        .select('preferred_provider, preferred_model, default_language')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        if (data.preferred_provider && data.preferred_model) {
+          setModelSelection({
+            provider: data.preferred_provider as LLMProvider,
+            model: data.preferred_model,
+          });
+        }
+        if (data.default_language) {
+          setLanguage(data.default_language as Language);
+        }
+      }
+    }
+    loadPrefs();
+  }, [supabase]);
 
   const fetchReports = useCallback(async () => {
     const { data } = await supabase
@@ -67,7 +100,7 @@ export default function ProfileReportsPage() {
       .select('name')
       .eq('id', profileId)
       .single()
-      .then(({ data }) => {
+      .then(({ data }: { data: { name: string } | null }) => {
         if (data) setProfileName(data.name);
       });
   }, [profileId, supabase, fetchReports]);
@@ -88,7 +121,8 @@ export default function ProfileReportsPage() {
           profileId,
           reportType,
           language,
-          model: model === 'claude' ? 'claude-sonnet-4-5' : 'gemini-2.0-flash',
+          provider: modelSelection.provider,
+          model: modelSelection.model,
         }),
       });
 
@@ -190,32 +224,12 @@ export default function ProfileReportsPage() {
           </div>
         </div>
 
-        {/* Model Selector */}
-        <div className="flex items-center gap-2">
-          <Languages className="w-4 h-4 text-muted-foreground" />
-          <div className="flex rounded-md border border-border overflow-hidden">
-            <button
-              onClick={() => setModel('claude')}
-              className={`px-3 py-1.5 text-sm font-medium transition ${
-                model === 'claude'
-                  ? 'bg-secondary text-secondary-foreground'
-                  : 'bg-card text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Claude
-            </button>
-            <button
-              onClick={() => setModel('gemini')}
-              className={`px-3 py-1.5 text-sm font-medium transition ${
-                model === 'gemini'
-                  ? 'bg-secondary text-secondary-foreground'
-                  : 'bg-card text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Gemini
-            </button>
-          </div>
-        </div>
+        {/* Model Selector — compact mode */}
+        <ModelSelector
+          value={modelSelection}
+          onChange={setModelSelection}
+          compact
+        />
       </div>
 
       {/* Streaming Progress */}

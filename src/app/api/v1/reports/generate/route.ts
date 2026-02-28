@@ -20,6 +20,7 @@ const GenerateReportSchema = z.object({
     "gem_recommendation",
   ]),
   language: z.enum(["en", "hi"]).default("en"),
+  provider: z.enum(["google", "openrouter"]).optional(),
   model: z.string().optional(),
 });
 
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { profileId, reportType, language, model } = parseResult.data;
+  const { profileId, reportType, language, provider, model } = parseResult.data;
 
   // Fetch profile with chart data — scoped to authenticated user
   const { data: profile, error: profileError } = await supabase
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       profile_id: profileId,
       report_type: reportType,
       language,
-      model_used: model || "anthropic/claude-sonnet-4-5",
+      model_used: model || (provider === "openrouter" ? "google/gemini-2.0-flash" : "gemini-2.0-flash"),
       generation_status: "generating",
     })
     .select()
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
       profileId,
       reportType,
       language,
+      provider,
       model,
       chartData: profile.chart_data as any,
     });

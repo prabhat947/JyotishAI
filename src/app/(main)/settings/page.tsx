@@ -3,11 +3,15 @@
 import { useState, useEffect } from "react";
 import { Loader2, Save, Check } from "lucide-react";
 import { createBrowserClient } from "@/lib/supabase/client";
+import ModelSelector, { type ModelSelection } from "@/components/model-selector";
+import { DEFAULT_PROVIDER, DEFAULT_MODEL } from "@/lib/llm/constants";
+import type { LLMProvider } from "@/lib/llm/constants";
 
 interface UserPrefs {
   ayanamsha: string;
   chart_style: string;
   default_language: string;
+  preferred_provider: LLMProvider;
   preferred_model: string;
   alert_enabled: boolean;
   alert_orb: number;
@@ -20,7 +24,8 @@ const DEFAULT_PREFS: UserPrefs = {
   ayanamsha: "lahiri",
   chart_style: "north_indian",
   default_language: "en",
-  preferred_model: "anthropic/claude-sonnet-4-5",
+  preferred_provider: DEFAULT_PROVIDER,
+  preferred_model: DEFAULT_MODEL,
   alert_enabled: true,
   alert_orb: 2.0,
   whatsapp_digest_enabled: false,
@@ -51,6 +56,7 @@ export default function SettingsPage() {
           ayanamsha: data.ayanamsha || DEFAULT_PREFS.ayanamsha,
           chart_style: data.chart_style || DEFAULT_PREFS.chart_style,
           default_language: data.default_language || DEFAULT_PREFS.default_language,
+          preferred_provider: data.preferred_provider || DEFAULT_PREFS.preferred_provider,
           preferred_model: data.preferred_model || DEFAULT_PREFS.preferred_model,
           alert_enabled: data.alert_enabled ?? DEFAULT_PREFS.alert_enabled,
           alert_orb: data.alert_orb ?? DEFAULT_PREFS.alert_orb,
@@ -81,6 +87,14 @@ export default function SettingsPage() {
 
   const update = <K extends keyof UserPrefs>(key: K, value: UserPrefs[K]) => {
     setPrefs((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleModelChange = (selection: ModelSelection) => {
+    setPrefs((prev) => ({
+      ...prev,
+      preferred_provider: selection.provider,
+      preferred_model: selection.model,
+    }));
   };
 
   if (loading) {
@@ -136,23 +150,32 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* AI & Language */}
-        <div className="glass rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">AI & Language</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* AI Model Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ModelSelector
+            value={{
+              provider: prefs.preferred_provider,
+              model: prefs.preferred_model,
+            }}
+            onChange={handleModelChange}
+          />
+
+          {/* Language */}
+          <div className="glass rounded-lg p-6">
+            <h3 className="text-sm font-semibold mb-4">Language</h3>
             <div>
-              <label className="block text-sm font-medium mb-2">Default Language</label>
-              <select value={prefs.default_language} onChange={(e) => update("default_language", e.target.value)} className="w-full px-3 py-2 rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary">
+              <label className="block text-sm font-medium mb-2">Default Report Language</label>
+              <select
+                value={prefs.default_language}
+                onChange={(e) => update("default_language", e.target.value)}
+                className="w-full px-3 py-2 rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              >
                 <option value="en">English</option>
                 <option value="hi">Hindi</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Preferred AI Model</label>
-              <select value={prefs.preferred_model} onChange={(e) => update("preferred_model", e.target.value)} className="w-full px-3 py-2 rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5</option>
-                <option value="google/gemini-2.0-flash">Gemini 2.0 Flash</option>
-              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Choose the default language for AI-generated reports and chat responses
+              </p>
             </div>
           </div>
         </div>

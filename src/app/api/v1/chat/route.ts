@@ -8,6 +8,7 @@ const ChatSchema = z.object({
   profileId: z.string().uuid(),
   sessionId: z.string().uuid().optional(),
   message: z.string().min(1).max(2000),
+  provider: z.enum(["google", "openrouter"]).optional(),
   model: z.string().optional(),
 });
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { profileId, sessionId, message, model } = parseResult.data;
+  const { profileId, sessionId, message, provider, model } = parseResult.data;
 
   // Verify profile belongs to authenticated user
   const { data: profile, error: profileError } = await supabase
@@ -130,10 +131,11 @@ export async function POST(request: NextRequest) {
       profileId,
       chartData: profile.chart_data as any,
       query: message,
-      conversationHistory: conversationHistory.map((m) => ({
+      conversationHistory: conversationHistory.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
+      provider,
       model,
     });
   } catch (error: unknown) {
@@ -192,7 +194,7 @@ export async function POST(request: NextRequest) {
             role: "assistant",
             content: fullResponse,
             sources,
-            model_used: model || "anthropic/claude-sonnet-4-5",
+            model_used: model || (provider === "openrouter" ? "google/gemini-2.0-flash" : "gemini-2.0-flash"),
           },
         ]);
 

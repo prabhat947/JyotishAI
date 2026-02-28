@@ -1,11 +1,12 @@
 /**
  * RAG-powered chat for birth chart queries
+ * Supports Google Gemini (direct) and OpenRouter providers
  */
 
 import { ChartData } from "../astro-client";
+import { createStreamingCompletion, resolveConfig } from "../llm/provider";
+import type { LLMProvider } from "../llm/constants";
 import { searchReportChunks, extractDateMentions } from "./retriever";
-
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -17,6 +18,7 @@ export interface ChatOptions {
   chartData: ChartData;
   query: string;
   conversationHistory: ChatMessage[];
+  provider?: LLMProvider;
   model?: string;
 }
 
@@ -27,7 +29,7 @@ export interface ChatOptions {
 export async function generateChatResponse(
   options: ChatOptions
 ): Promise<ReadableStream<Uint8Array>> {
-  const { profileId, chartData, query, conversationHistory, model } = options;
+  const { profileId, chartData, query, conversationHistory, provider, model } = options;
 
   // Extract date mentions for context
   // TODO: compute transit positions for extracted dates via astro-engine
@@ -69,31 +71,16 @@ If the query mentions specific dates, provide transit analysis for those dates.
 Cite your sources when referencing report content.
 Be conversational but accurate.`;
 
-  // Call OpenRouter streaming API
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      "X-Title": "JyotishAI Chat",
-    },
-    body: JSON.stringify({
-      model: model || "anthropic/claude-sonnet-4-5",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory,
-        { role: "user", content: query },
-      ],
-      stream: true,
-    }),
-  });
+  const config = resolveConfig({ provider, model });
 
-  if (!response.ok) {
-    throw new Error(`Chat API error: ${response.statusText}`);
-  }
-
-  return response.body!;
+  return createStreamingCompletion(config, [
+    { role: "system", content: systemPrompt },
+    ...conversationHistory.map((m) => ({
+      role: m.role as "system" | "user" | "assistant",
+      content: m.content,
+    })),
+    { role: "user", content: query },
+  ]);
 }
 
 /**
