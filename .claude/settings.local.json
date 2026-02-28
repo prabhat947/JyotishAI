@@ -1,6 +1,39 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git -C C:/Prabhat/Projects/JyotishAI log --oneline -20)",
+      "Bash(netstat:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(echo:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx @playwright/mcp:*)",
+      "Bash(claude mcp:*)",
+      "Bash(tasklist:*)",
+      "Bash(node test-authenticated.mjs:*)",
+      "Bash(nslookup:*)",
+      "Bash(docker --version:*)",
+      "Bash(supabase --version:*)",
+      "Bash(npx supabase projects list)",
+      "Bash(npx supabase projects api-keys --project-ref mzzqsjdcqhfpjhtlrejg)",
+      "Bash(npx supabase --help)",
+      "Bash(npx supabase projects --help)",
+      "Bash(npx supabase projects list --output json)",
+      "Bash(powershell -Command \"Get-DnsClientServerAddress -InterfaceAlias ''Wi-Fi'' | Select-Object InterfaceAlias, ServerAddresses\")",
+      "Bash(npm run dev)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue | Select-Object OwningProcess | ForEach-Object { Get-Process -Id $_OwningProcess } | Select-Object Id, ProcessName\")",
+      "Bash(taskkill //F //PID 245284)",
+      "Bash(npx next dev -p 3002)",
+      "Bash(taskkill //F //PID 308368 //T)",
+      "Bash(taskkill //F //PID 285996 //T)",
+      "Bash(taskkill //F //PID 230776 //T)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
