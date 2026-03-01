@@ -11,9 +11,11 @@ import {
   FileText,
   MessageSquare,
   Globe,
+  X,
 } from "lucide-react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 const mainNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -21,7 +23,12 @@ const mainNavigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobile?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ mobile, onClose }: SidebarProps) {
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
@@ -52,10 +59,14 @@ export default function Sidebar() {
     return pathname === href || pathname?.startsWith(href + "/");
   };
 
-  return (
-    <div className="w-64 glass border-r border-border flex flex-col">
+  const handleNavClick = () => {
+    if (mobile && onClose) onClose();
+  };
+
+  const navContent = (
+    <>
       <div className="p-6">
-        <Link href="/dashboard">
+        <Link href="/dashboard" onClick={handleNavClick}>
           <h1 className="text-2xl font-bold text-primary">JyotishAI</h1>
           <p className="text-xs text-muted-foreground mt-1">Vedic Astrology</p>
         </Link>
@@ -71,6 +82,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={handleNavClick}
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-md mb-1
                 transition-colors
@@ -102,6 +114,7 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={handleNavClick}
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-md mb-1
                     transition-colors
@@ -123,13 +136,55 @@ export default function Sidebar() {
 
       <div className="p-3 border-t border-border">
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            handleLogout();
+            handleNavClick();
+          }}
           className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>
       </div>
+    </>
+  );
+
+  // Mobile drawer
+  if (mobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/60 z-40"
+        />
+        {/* Drawer */}
+        <motion.div
+          initial={{ x: -288 }}
+          animate={{ x: 0 }}
+          exit={{ x: -288 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="fixed inset-y-0 left-0 w-72 glass border-r border-border flex flex-col z-50"
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {navContent}
+        </motion.div>
+      </>
+    );
+  }
+
+  // Desktop sidebar
+  return (
+    <div className="w-64 glass border-r border-border flex-col hidden md:flex">
+      {navContent}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -20,6 +20,17 @@ export default function ReportViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [streamContent, setStreamContent] = useState('');
 
+  const buildReport = useCallback((data: Record<string, unknown>): Report => ({
+    id: data.id as string,
+    profileId: data.profile_id as string,
+    type: data.report_type as ReportType,
+    language: ((data.language as string) || 'en') as Language,
+    model: (data.model_used as string) || 'unknown',
+    content: (data.content as string) || '',
+    generatedAt: new Date((data.created_at as string) ?? Date.now()),
+    isFavorite: (data.is_favorite as boolean) || false,
+  }), []);
+
   useEffect(() => {
     async function fetchReport() {
       const { data, error: fetchError } = await supabase
@@ -34,73 +45,50 @@ export default function ReportViewPage() {
         return;
       }
 
-      const reportData: Report = {
-        id: data.id,
-        profileId: data.profile_id,
-        type: data.report_type as ReportType,
-        language: (data.language || 'en') as Language,
-        model: data.model_used || 'unknown',
-        content: data.content || '',
-        generatedAt: new Date(data.created_at ?? Date.now()),
-        isFavorite: data.is_favorite || false,
-      };
+      const reportData = buildReport(data);
 
-      // If still generating, set up SSE to watch it complete
       if (data.generation_status === 'generating') {
         setStreamContent(data.content || '');
-        watchGeneration(reportData);
+        setLoading(false);
+        pollForCompletion(reportData);
       } else {
         setReport(reportData);
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     fetchReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId]);
 
-  const watchGeneration = async (initialReport: Report) => {
-    try {
-      const response = await fetch(`/api/v1/reports/${reportId}/stream`);
-      if (!response.ok) {
-        // Stream not available, just use current content
-        setReport(initialReport);
+  const pollForCompletion = async (initialReport: Report) => {
+    const maxAttempts = 150; // 5 minutes at 2s intervals
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      attempts++;
+
+      const { data } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('id', reportId)
+        .single();
+
+      if (!data) break;
+
+      if (data.content) {
+        setStreamContent(data.content);
+      }
+
+      if (data.generation_status === 'complete' || data.generation_status === 'failed') {
+        setReport({ ...initialReport, content: data.content || '' });
         return;
       }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = initialReport.content || '';
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
-
-        for (const line of lines) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              fullContent += data.content;
-              setStreamContent(fullContent);
-            }
-            if (data.done) {
-              setReport({ ...initialReport, content: fullContent });
-              return;
-            }
-          } catch {
-            // SSE parse error, skip
-          }
-        }
-      }
-
-      setReport({ ...initialReport, content: fullContent });
-    } catch {
-      setReport(initialReport);
     }
+
+    // Timeout — show whatever we have
+    setReport(initialReport);
   };
 
   const handleDownloadPDF = () => {
@@ -149,12 +137,12 @@ export default function ReportViewPage() {
             <p className="text-muted-foreground text-sm">Please wait while the report is being generated</p>
           </div>
         </div>
-        <div className="glass rounded-lg p-6">
+        <div className="glass rounded-lg p-4 md:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Streaming report content...</span>
+            <span className="text-sm text-muted-foreground">Generating report content...</span>
           </div>
-          <div className="bg-card rounded-lg p-6 border border-border max-h-[70vh] overflow-y-auto">
+          <div className="bg-card rounded-lg p-4 md:p-6 border border-border max-h-[70vh] overflow-y-auto">
             <p className="text-sm text-foreground whitespace-pre-wrap">
               {streamContent}
             </p>
@@ -164,17 +152,32 @@ export default function ReportViewPage() {
     );
   }
 
-  if (!report) {
+  // Empty content fallback
+  if (!report || !report.content || report.content.trim() === '') {
     return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground mb-4">Report not found</p>
-        <Link
-          href={`/profile/${profileId}/reports`}
-          className="text-primary hover:underline"
-        >
-          Back to Reports
-        </Link>
-      </div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        <div className="flex items-center gap-3 mb-8">
+          <Link
+            href={`/profile/${profileId}/reports`}
+            className="p-2 rounded-md hover:bg-muted/50 transition text-muted-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Report Content Unavailable</h1>
+            <p className="text-muted-foreground text-sm">The report may not have generated correctly.</p>
+          </div>
+        </div>
+        <div className="glass rounded-lg p-8 text-center">
+          <p className="text-muted-foreground mb-4">No content found for this report. Try regenerating it.</p>
+          <Link
+            href={`/profile/${profileId}/reports`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition"
+          >
+            Back to Reports
+          </Link>
+        </div>
+      </motion.div>
     );
   }
 
@@ -204,7 +207,7 @@ export default function ReportViewPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition"
         >
           <Download className="w-4 h-4" />
-          Download PDF
+          <span className="hidden sm:inline">Download</span> PDF
         </button>
       </div>
 

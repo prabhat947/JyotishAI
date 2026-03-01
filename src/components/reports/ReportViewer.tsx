@@ -64,11 +64,11 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
       className={`bg-[#0a0a1a] rounded-lg border border-[#1e2d4a] ${className}`}
     >
       {/* Header */}
-      <div className="p-6 border-b border-[#1e2d4a]">
-        <div className="flex items-start justify-between mb-4">
+      <div className="p-4 md:p-6 border-b border-[#1e2d4a]">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-[#c9a227]">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#c9a227]">
                 {reportTypeLabels[report.type]}
               </h2>
               <span
@@ -93,14 +93,14 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onDownloadPDF}
-              className="px-4 py-2 bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition-colors flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition-colors flex items-center gap-2 text-sm"
             >
               <Download size={16} />
               PDF
             </button>
             <button
               onClick={onShare}
-              className="px-4 py-2 bg-[#0f1729] text-[#e2e8f0] border border-[#1e2d4a] rounded-lg hover:border-[#7c3aed] transition-colors flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-[#0f1729] text-[#e2e8f0] border border-[#1e2d4a] rounded-lg hover:border-[#7c3aed] transition-colors flex items-center gap-2 text-sm"
             >
               <Share2 size={16} />
               Share
@@ -131,7 +131,7 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         {sections.map((section, index) => (
           <Section
             key={index}
@@ -143,8 +143,8 @@ export const ReportViewer: React.FC<ReportViewerProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-[#1e2d4a] bg-[#0f1729]">
-        <div className="flex items-center justify-between text-sm text-[#64748b]">
+      <div className="p-4 md:p-6 border-t border-[#1e2d4a] bg-[#0f1729]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-[#64748b]">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Clock size={14} />

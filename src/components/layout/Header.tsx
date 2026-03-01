@@ -2,10 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import { AlertBell } from "@/components/notifications/AlertBell";
 import type { Alert } from "@/types/astro";
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname();
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
@@ -88,9 +93,19 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 border-b border-border flex items-center justify-between px-6 glass">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {buildBreadcrumb()}
+    <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-3 md:px-6 glass">
+      <div className="flex items-center gap-2">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 -ml-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors md:hidden"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+        <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
+          {buildBreadcrumb()}
+        </span>
       </div>
 
       <div className="flex items-center gap-4">
