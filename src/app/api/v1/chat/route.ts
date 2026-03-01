@@ -189,20 +189,22 @@ export async function POST(request: NextRequest) {
         controller.close();
 
         // Save messages to database (fire-and-forget after stream closes)
-        supabase.from("chat_messages").insert([
-          {
-            session_id: currentSessionId,
-            role: "user",
-            content: message,
-          },
-          {
-            session_id: currentSessionId,
-            role: "assistant",
-            content: fullResponse,
-            sources,
-            model_used: model || (provider === "openrouter" ? "google/gemini-2.0-flash" : "gemini-2.0-flash"),
-          },
-        ]).then(() => {}).catch((err: unknown) => console.error("[Chat] Save messages failed:", err));
+        Promise.resolve(
+          supabase.from("chat_messages").insert([
+            {
+              session_id: currentSessionId,
+              role: "user",
+              content: message,
+            },
+            {
+              session_id: currentSessionId,
+              role: "assistant",
+              content: fullResponse,
+              sources,
+              model_used: model || (provider === "openrouter" ? "google/gemini-2.0-flash" : "gemini-2.0-flash"),
+            },
+          ])
+        ).catch((err: unknown) => console.error("[Chat] Save messages failed:", err));
       } catch (error) {
         console.error("[Chat] Stream processing error:", error);
 
