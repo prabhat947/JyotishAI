@@ -2,23 +2,23 @@ import { ChartData } from "../astro-client";
 
 export default function yearlyPrompt(chartData: ChartData, language: "en" | "hi"): string {
   const currentYear = new Date().getFullYear();
-  const { lagna, planets, dashas, yogas } = chartData;
+  const { lagna, planets, dashas } = chartData;
 
   return `
 # ${currentYear} Yearly Horoscope
 
 ## Birth Chart Summary
-- Lagna: ${lagna.sign}
-- Sun: ${planets.Sun.sign} in ${planets.Sun.house}th house
-- Moon: ${planets.Moon.sign} in ${planets.Moon.house}th house, ${planets.Moon.nakshatra}
+- Lagna: ${lagna?.sign || "Unknown"}
+- Sun: ${planets?.Sun?.sign || "Unknown"} in ${planets?.Sun?.house || "?"}th house
+- Moon: ${planets?.Moon?.sign || "Unknown"} in ${planets?.Moon?.house || "?"}th house, ${planets?.Moon?.nakshatra || "Unknown"}
 
 ## Current Dasha Period (${currentYear})
-- Mahadasha: ${dashas.current.mahadasha}
-- Antardasha: ${dashas.current.antardasha}
-- Period: ${dashas.current.antardasha_start} to ${dashas.current.antardasha_end}
+- Mahadasha: ${dashas?.current?.mahadasha || "Unknown"}
+- Antardasha: ${dashas?.current?.antardasha || "Unknown"}
+- Period: ${dashas?.current?.antardasha_start || "?"} to ${dashas?.current?.antardasha_end || "?"}
 
 ## Major Planetary Positions
-${Object.entries(planets).map(([name, data]) => `- ${name}: ${data.sign} (${data.house}th house)`).join("\n")}
+${planets ? Object.entries(planets).map(([name, data]) => `- ${name}: ${data?.sign || "?"} (${data?.house || "?"}th house)`).join("\n") : "Not available"}
 
 ## Analysis Request
 Provide a detailed year-by-year forecast for ${currentYear} covering:

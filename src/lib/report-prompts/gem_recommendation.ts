@@ -1,24 +1,25 @@
 import { ChartData } from "../astro-client";
 
 export default function gemRecommendationPrompt(chartData: ChartData, language: "en" | "hi"): string {
-  const { lagna, planets, houses, dashas } = chartData;
+  const { lagna, planets, dashas } = chartData;
+  const lagnaLord = lagna?.lord;
 
   return `
 # Gemstone Recommendation Report
 
 ## Birth Chart Summary
-- Lagna: ${lagna.sign}, Lord: ${lagna.lord}
-- Moon: ${planets.Moon.sign}, Nakshatra: ${planets.Moon.nakshatra}
-- Lagna Lord Position: ${planets[lagna.lord]?.sign} in ${planets[lagna.lord]?.house}th house
+- Lagna: ${lagna?.sign || "Unknown"}, Lord: ${lagnaLord || "Unknown"}
+- Moon: ${planets?.Moon?.sign || "Unknown"}, Nakshatra: ${planets?.Moon?.nakshatra || "Unknown"}
+- Lagna Lord Position: ${lagnaLord && planets?.[lagnaLord]?.sign || "Unknown"} in ${lagnaLord && planets?.[lagnaLord]?.house || "?"}th house
 
 ## Current Dasha
-- Mahadasha: ${dashas.current.mahadasha}
-- Antardasha: ${dashas.current.antardasha}
+- Mahadasha: ${dashas?.current?.mahadasha || "Unknown"}
+- Antardasha: ${dashas?.current?.antardasha || "Unknown"}
 
 ## All Planetary Positions
-${Object.entries(planets).map(([name, data]) =>
-  `- ${name}: ${data.sign} in ${data.house}th house${data.retrograde ? " (R)" : ""}`
-).join("\n")}
+${planets ? Object.entries(planets).map(([name, data]) =>
+  `- ${name}: ${data?.sign || "?"} in ${data?.house || "?"}th house${data?.retrograde ? " (R)" : ""}`
+).join("\n") : "Not available"}
 
 ## Analysis Request
 Gemstones (Ratnas) are powerful Vedic remedies that channel planetary energies.
@@ -64,7 +65,7 @@ Provide comprehensive gemstone guidance:
 12. **When to Remove** - If adverse effects occur
 
 ### Dasha-Specific Recommendations
-13. **Current Period Gems** - For active ${dashas.current.mahadasha}-${dashas.current.antardasha}
+13. **Current Period Gems** - For active ${dashas?.current?.mahadasha || "current"}-${dashas?.current?.antardasha || "period"}
 14. **Future Preparation** - Gems for upcoming dashas
 
 Generate detailed gemstone report in ${language === "hi" ? "Hindi" : "English"}.

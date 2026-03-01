@@ -1,21 +1,21 @@
 import { ChartData } from "../astro-client";
 
 export default function transitSaturnPrompt(chartData: ChartData, language: "en" | "hi"): string {
-  const { lagna, planets, houses } = chartData;
+  const { planets } = chartData;
 
   return `
 # Saturn Transit Predictions (Sade Sati & Dhaiya)
 
 ## Natal Saturn Position
-- Sign: ${planets.Saturn.sign}
-- House: ${planets.Saturn.house}th
-- Nakshatra: ${planets.Saturn.nakshatra}
-- ${planets.Saturn.retrograde ? "Retrograde" : "Direct"}
+- Sign: ${planets?.Saturn?.sign || "Unknown"}
+- House: ${planets?.Saturn?.house || "?"}th
+- Nakshatra: ${planets?.Saturn?.nakshatra || "Unknown"}
+- ${planets?.Saturn?.retrograde ? "Retrograde" : "Direct"}
 
 ## Natal Moon (for Sade Sati calculation)
-- Moon Sign: ${planets.Moon.sign}
-- Moon House: ${planets.Moon.house}th
-- Moon Nakshatra: ${planets.Moon.nakshatra}
+- Moon Sign: ${planets?.Moon?.sign || "Unknown"}
+- Moon House: ${planets?.Moon?.house || "?"}th
+- Moon Nakshatra: ${planets?.Moon?.nakshatra || "Unknown"}
 
 ## Analysis Request
 Saturn takes 30 years for one zodiac cycle. Critical periods:

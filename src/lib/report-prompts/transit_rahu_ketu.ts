@@ -1,18 +1,18 @@
 import { ChartData } from "../astro-client";
 
 export default function transitRahuKetuPrompt(chartData: ChartData, language: "en" | "hi"): string {
-  const { lagna, planets, houses } = chartData;
+  const { lagna, planets } = chartData;
 
   return `
 # Rahu-Ketu Transit Predictions (Nodal Transits)
 
 ## Natal Nodal Axis
-- Rahu: ${planets.Rahu.sign} in ${planets.Rahu.house}th house, ${planets.Rahu.nakshatra}
-- Ketu: ${planets.Ketu.sign} in ${planets.Ketu.house}th house, ${planets.Ketu.nakshatra}
+- Rahu: ${planets?.Rahu?.sign || "Unknown"} in ${planets?.Rahu?.house || "?"}th house, ${planets?.Rahu?.nakshatra || "Unknown"}
+- Ketu: ${planets?.Ketu?.sign || "Unknown"} in ${planets?.Ketu?.house || "?"}th house, ${planets?.Ketu?.nakshatra || "Unknown"}
 
 ## Lagna & Moon
-- Lagna: ${lagna.sign}
-- Moon: ${planets.Moon.sign} in ${planets.Moon.house}th house
+- Lagna: ${lagna?.sign || "Unknown"}
+- Moon: ${planets?.Moon?.sign || "Unknown"} in ${planets?.Moon?.house || "?"}th house
 
 ## Analysis Request
 Rahu and Ketu transit in reverse (retrograde) through the zodiac, spending 18 months in each sign.

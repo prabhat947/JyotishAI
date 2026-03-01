@@ -7,15 +7,15 @@ export default function transitJupiterPrompt(chartData: ChartData, language: "en
 # Jupiter Transit Predictions
 
 ## Natal Jupiter Position
-- Sign: ${planets.Jupiter.sign}
-- House: ${planets.Jupiter.house}th
-- Nakshatra: ${planets.Jupiter.nakshatra}
-- ${planets.Jupiter.retrograde ? "Retrograde" : "Direct"}
+- Sign: ${planets?.Jupiter?.sign || "Unknown"}
+- House: ${planets?.Jupiter?.house || "?"}th
+- Nakshatra: ${planets?.Jupiter?.nakshatra || "Unknown"}
+- ${planets?.Jupiter?.retrograde ? "Retrograde" : "Direct"}
 
 ## Lagna & Key Houses
-- Lagna: ${lagna.sign}
-- 9th House (Jupiter's domain): ${houses["9"].sign}
-- 12th House (Jupiter's other domain): ${houses["12"].sign}
+- Lagna: ${lagna?.sign || "Unknown"}
+- 9th House (Jupiter's domain): ${houses?.["9"]?.sign || "Unknown"}
+- 12th House (Jupiter's other domain): ${houses?.["12"]?.sign || "Unknown"}
 
 ## Analysis Request
 Jupiter takes 12 years to complete one zodiac cycle. Provide transit analysis covering:
