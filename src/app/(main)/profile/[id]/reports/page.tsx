@@ -105,8 +105,8 @@ export default function ProfileReportsPage() {
       });
   }, [profileId, supabase, fetchReports]);
 
-  const getReportForType = (type: ReportType) => {
-    return reports.find((r) => r.report_type === type);
+  const getReportsForType = (type: ReportType) => {
+    return reports.filter((r) => r.report_type === type);
   };
 
   const handleGenerate = async (reportType: ReportType) => {
@@ -266,7 +266,10 @@ export default function ProfileReportsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {REPORT_TYPES.map((type) => {
-            const existingReport = getReportForType(type.id);
+            const existingReports = getReportsForType(type.id);
+            const enReport = existingReports.find((r) => r.language === 'en');
+            const hiReport = existingReports.find((r) => r.language === 'hi');
+            const hasAny = existingReports.length > 0;
             const isGenerating = generatingType === type.id;
 
             return (
@@ -289,47 +292,88 @@ export default function ProfileReportsPage() {
                   </div>
                 </div>
 
-                {existingReport ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          existingReport.language === 'en'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-green-500/20 text-green-400'
-                        }`}
-                      >
-                        {existingReport.language === 'en' ? 'EN' : 'HI'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(existingReport.created_at ?? Date.now()).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/profile/${profileId}/reports/${existingReport.id}`}
-                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-secondary/20 text-secondary rounded-md text-xs font-medium hover:bg-secondary/30 transition"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        View
-                      </Link>
-                      <button
-                        onClick={() => handleDownloadPDF(existingReport.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-2 border border-border rounded-md text-xs font-medium hover:bg-muted/50 transition"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        PDF
-                      </button>
+                {hasAny ? (
+                  <div className="space-y-2">
+                    {/* English version */}
+                    {enReport && (
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 shrink-0">
+                          EN
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(enReport.created_at ?? Date.now()).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                        <div className="flex gap-1 ml-auto">
+                          <Link
+                            href={`/profile/${profileId}/reports/${enReport.id}`}
+                            className="flex items-center gap-1 px-2 py-1 bg-secondary/20 text-secondary rounded text-xs font-medium hover:bg-secondary/30 transition"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View
+                          </Link>
+                          <button
+                            onClick={() => handleDownloadPDF(enReport.id)}
+                            className="flex items-center gap-1 px-2 py-1 border border-border rounded text-xs hover:bg-muted/50 transition"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Hindi version */}
+                    {hiReport && (
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400 shrink-0">
+                          HI
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(hiReport.created_at ?? Date.now()).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                        <div className="flex gap-1 ml-auto">
+                          <Link
+                            href={`/profile/${profileId}/reports/${hiReport.id}`}
+                            className="flex items-center gap-1 px-2 py-1 bg-secondary/20 text-secondary rounded text-xs font-medium hover:bg-secondary/30 transition"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View
+                          </Link>
+                          <button
+                            onClick={() => handleDownloadPDF(hiReport.id)}
+                            className="flex items-center gap-1 px-2 py-1 border border-border rounded text-xs hover:bg-muted/50 transition"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Generate / Regenerate button */}
+                    <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => handleGenerate(type.id)}
                         disabled={isGenerating}
-                        className="flex items-center justify-center gap-1 px-3 py-2 border border-border rounded-md text-xs font-medium hover:bg-muted/50 transition disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition disabled:opacity-50"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Generating {language === 'en' ? 'EN' : 'HI'}...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            {(language === 'en' && !enReport) || (language === 'hi' && !hiReport)
+                              ? `Generate ${language === 'en' ? 'English' : 'Hindi'}`
+                              : `Regenerate ${language === 'en' ? 'English' : 'Hindi'}`}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -345,7 +389,7 @@ export default function ProfileReportsPage() {
                         Generating...
                       </>
                     ) : (
-                      'Generate'
+                      `Generate (${language === 'en' ? 'English' : 'Hindi'})`
                     )}
                   </button>
                 )}
