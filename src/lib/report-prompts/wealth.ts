@@ -1,48 +1,5 @@
 import { ChartData } from "../astro-client";
-
-/** Helper: format all planets into a detailed table */
-function formatPlanets(planets: ChartData["planets"]): string {
-  if (!planets) return "Planetary data not available";
-  return Object.entries(planets)
-    .map(
-      ([name, p]) =>
-        `- **${name}**: ${p?.sign || "?"} (${p?.degrees?.toFixed(2) ?? "?"}°) in ${p?.house ?? "?"}th house, ` +
-        `${p?.nakshatra || "?"} Nakshatra Pada ${p?.pada ?? "?"}, Lord: ${p?.lord || "?"}` +
-        `${p?.retrograde ? " [RETROGRADE]" : ""}${p?.combust ? " [COMBUST]" : ""}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all 12 houses */
-function formatHouses(houses: ChartData["houses"]): string {
-  if (!houses) return "House data not available";
-  return Object.entries(houses)
-    .map(
-      ([num, h]) =>
-        `- **${num}th House**: ${h?.sign || "?"}, Lord: ${h?.lord || "?"}, ` +
-        `Occupants: ${h?.planets?.length > 0 ? h.planets.join(", ") : "Empty"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format dasha sequence */
-function formatDashaSequence(dashas: ChartData["dashas"]): string {
-  if (!dashas?.sequence) return "Dasha sequence not available";
-  return dashas.sequence
-    .map((d) => `- **${d?.planet || "?"}** Mahadasha: ${d?.start || "?"} → ${d?.end || "?"}`)
-    .join("\n");
-}
-
-/** Helper: format yogas */
-function formatYogas(yogas: ChartData["yogas"]): string {
-  if (!yogas || yogas.length === 0) return "No yogas detected";
-  return yogas
-    .map(
-      (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
+import { formatPlanets, formatHouses, formatDashaSequence, formatYogas, formatAshtakavarga, safeHousePlanets } from "./_helpers";
 
 /** Helper: filter wealth/dhana-relevant yogas */
 function formatDhanaYogas(yogas: ChartData["yogas"]): string {
@@ -58,18 +15,7 @@ function formatDhanaYogas(yogas: ChartData["yogas"]): string {
   return dhanaYogas
     .map(
       (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format ashtakavarga */
-function formatAshtakavarga(ashtakavarga: ChartData["ashtakavarga"]): string {
-  if (!ashtakavarga) return "Ashtakavarga data not available";
-  return Object.entries(ashtakavarga)
-    .map(
-      ([planet, bindus]) =>
-        `- **${planet}**: [${bindus?.join(", ") || "?"}] (Aries→Pisces) Total: ${bindus?.reduce((a, b) => a + b, 0) ?? "?"}`
+        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${(Array.isArray(y?.planets) ? y.planets.join(", ") : String(y?.planets ?? "?"))} | Effect: ${y?.effect || "N/A"}`
     )
     .join("\n");
 }
@@ -128,31 +74,31 @@ You MUST produce a comprehensive, multi-chapter wealth horoscope report followin
 - Lagna Lord Position: ${lagnaLord?.sign || "?"} in ${lagnaLord?.house ?? "?"}th house, ${lagnaLord?.nakshatra || "?"} Nakshatra${lagnaLord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Primary Wealth Houses
-- **2nd House (Dhana Bhava — Accumulated Wealth/Family Wealth)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${house2?.planets?.length ? house2.planets.join(", ") : "Empty"}
+- **2nd House (Dhana Bhava — Accumulated Wealth/Family Wealth)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${safeHousePlanets(house2)}
 - **2nd Lord Position**: ${house2Lord?.sign || "?"} in ${house2Lord?.house ?? "?"}th house, ${house2Lord?.nakshatra || "?"}${house2Lord?.retrograde ? " [RETROGRADE]" : ""}${house2Lord?.combust ? " [COMBUST]" : ""}
-- **11th House (Labha Bhava — Gains/Income/Profits)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${house11?.planets?.length ? house11.planets.join(", ") : "Empty"}
+- **11th House (Labha Bhava — Gains/Income/Profits)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${safeHousePlanets(house11)}
 - **11th Lord Position**: ${house11Lord?.sign || "?"} in ${house11Lord?.house ?? "?"}th house, ${house11Lord?.nakshatra || "?"}${house11Lord?.retrograde ? " [RETROGRADE]" : ""}${house11Lord?.combust ? " [COMBUST]" : ""}
 
 ### Supporting Wealth Houses
-- **5th House (Purva Punya — Speculation/Past Merit)**: ${house5?.sign || "?"}, Lord: ${house5?.lord || "?"}, Occupants: ${house5?.planets?.length ? house5.planets.join(", ") : "Empty"}
+- **5th House (Purva Punya — Speculation/Past Merit)**: ${house5?.sign || "?"}, Lord: ${house5?.lord || "?"}, Occupants: ${safeHousePlanets(house5)}
 - **5th Lord Position**: ${house5Lord?.sign || "?"} in ${house5Lord?.house ?? "?"}th house${house5Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **8th House (Ayur Bhava — Inheritance/Sudden Gains/Insurance)**: ${house8?.sign || "?"}, Lord: ${house8?.lord || "?"}, Occupants: ${house8?.planets?.length ? house8.planets.join(", ") : "Empty"}
+- **8th House (Ayur Bhava — Inheritance/Sudden Gains/Insurance)**: ${house8?.sign || "?"}, Lord: ${house8?.lord || "?"}, Occupants: ${safeHousePlanets(house8)}
 - **8th Lord Position**: ${house8Lord?.sign || "?"} in ${house8Lord?.house ?? "?"}th house${house8Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **9th House (Dharma Bhava — Fortune/Luck/Father's Wealth)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${house9?.planets?.length ? house9.planets.join(", ") : "Empty"}
+- **9th House (Dharma Bhava — Fortune/Luck/Father's Wealth)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${safeHousePlanets(house9)}
 - **9th Lord Position**: ${house9Lord?.sign || "?"} in ${house9Lord?.house ?? "?"}th house${house9Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **10th House (Karma Bhava — Career Income)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${house10?.planets?.length ? house10.planets.join(", ") : "Empty"}
+- **10th House (Karma Bhava — Career Income)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${safeHousePlanets(house10)}
 - **10th Lord Position**: ${house10Lord?.sign || "?"} in ${house10Lord?.house ?? "?"}th house${house10Lord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Wealth-Draining Houses
-- **6th House (Debts/Loans/Expenses)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${house6?.planets?.length ? house6.planets.join(", ") : "Empty"}
+- **6th House (Debts/Loans/Expenses)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${safeHousePlanets(house6)}
 - **6th Lord Position**: ${house6Lord?.sign || "?"} in ${house6Lord?.house ?? "?"}th house${house6Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **12th House (Vyaya Bhava — Losses/Expenditure/Foreign)**: ${house12?.sign || "?"}, Lord: ${house12?.lord || "?"}, Occupants: ${house12?.planets?.length ? house12.planets.join(", ") : "Empty"}
+- **12th House (Vyaya Bhava — Losses/Expenditure/Foreign)**: ${house12?.sign || "?"}, Lord: ${house12?.lord || "?"}, Occupants: ${safeHousePlanets(house12)}
 - **12th Lord Position**: ${house12Lord?.sign || "?"} in ${house12Lord?.house ?? "?"}th house${house12Lord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Additional Wealth-Related Houses
-- **4th House (Property/Vehicles/Fixed Assets)**: ${house4?.sign || "?"}, Lord: ${house4?.lord || "?"}, Occupants: ${house4?.planets?.length ? house4.planets.join(", ") : "Empty"}
+- **4th House (Property/Vehicles/Fixed Assets)**: ${house4?.sign || "?"}, Lord: ${house4?.lord || "?"}, Occupants: ${safeHousePlanets(house4)}
 - **4th Lord Position**: ${house4Lord?.sign || "?"} in ${house4Lord?.house ?? "?"}th house${house4Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **7th House (Business/Trade/Partnerships)**: ${house7?.sign || "?"}, Lord: ${house7?.lord || "?"}, Occupants: ${house7?.planets?.length ? house7.planets.join(", ") : "Empty"}
+- **7th House (Business/Trade/Partnerships)**: ${house7?.sign || "?"}, Lord: ${house7?.lord || "?"}, Occupants: ${safeHousePlanets(house7)}
 - **7th Lord Position**: ${house7Lord?.sign || "?"} in ${house7Lord?.house ?? "?"}th house${house7Lord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Wealth Significator Planets (Dhana Karakas)

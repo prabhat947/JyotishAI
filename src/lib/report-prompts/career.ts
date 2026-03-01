@@ -1,48 +1,5 @@
 import { ChartData } from "../astro-client";
-
-/** Helper: format all planets into a detailed table */
-function formatPlanets(planets: ChartData["planets"]): string {
-  if (!planets) return "Planetary data not available";
-  return Object.entries(planets)
-    .map(
-      ([name, p]) =>
-        `- **${name}**: ${p?.sign || "?"} (${p?.degrees?.toFixed(2) ?? "?"}°) in ${p?.house ?? "?"}th house, ` +
-        `${p?.nakshatra || "?"} Nakshatra Pada ${p?.pada ?? "?"}, Lord: ${p?.lord || "?"}` +
-        `${p?.retrograde ? " [RETROGRADE]" : ""}${p?.combust ? " [COMBUST]" : ""}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all 12 houses */
-function formatHouses(houses: ChartData["houses"]): string {
-  if (!houses) return "House data not available";
-  return Object.entries(houses)
-    .map(
-      ([num, h]) =>
-        `- **${num}th House**: ${h?.sign || "?"}, Lord: ${h?.lord || "?"}, ` +
-        `Occupants: ${h?.planets?.length > 0 ? h.planets.join(", ") : "Empty"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format dasha sequence */
-function formatDashaSequence(dashas: ChartData["dashas"]): string {
-  if (!dashas?.sequence) return "Dasha sequence not available";
-  return dashas.sequence
-    .map((d) => `- **${d?.planet || "?"}** Mahadasha: ${d?.start || "?"} → ${d?.end || "?"}`)
-    .join("\n");
-}
-
-/** Helper: format yogas */
-function formatYogas(yogas: ChartData["yogas"]): string {
-  if (!yogas || yogas.length === 0) return "No yogas detected";
-  return yogas
-    .map(
-      (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
+import { formatPlanets, formatHouses, formatDashaSequence, formatYogas, formatAshtakavarga, safeHousePlanets } from "./_helpers";
 
 /** Helper: filter career-relevant yogas */
 function formatCareerYogas(yogas: ChartData["yogas"]): string {
@@ -58,18 +15,7 @@ function formatCareerYogas(yogas: ChartData["yogas"]): string {
   return careerYogas
     .map(
       (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format ashtakavarga */
-function formatAshtakavarga(ashtakavarga: ChartData["ashtakavarga"]): string {
-  if (!ashtakavarga) return "Ashtakavarga data not available";
-  return Object.entries(ashtakavarga)
-    .map(
-      ([planet, bindus]) =>
-        `- **${planet}**: [${bindus?.join(", ") || "?"}] (Aries→Pisces) Total: ${bindus?.reduce((a, b) => a + b, 0) ?? "?"}`
+        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${(Array.isArray(y?.planets) ? y.planets.join(", ") : String(y?.planets ?? "?"))} | Effect: ${y?.effect || "N/A"}`
     )
     .join("\n");
 }
@@ -109,21 +55,21 @@ You MUST produce a comprehensive, multi-chapter career horoscope report followin
 - Lagna Lord Position: ${lagnaLord?.sign || "?"} in ${lagnaLord?.house ?? "?"}th house, ${lagnaLord?.nakshatra || "?"} Nakshatra${lagnaLord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Key Career Houses
-- **10th House (Karma Bhava — Career/Profession)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${house10?.planets?.length ? house10.planets.join(", ") : "Empty"}
+- **10th House (Karma Bhava — Career/Profession)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${safeHousePlanets(house10)}
 - **10th Lord Position**: ${house10Lord?.sign || "?"} in ${house10Lord?.house ?? "?"}th house, ${house10Lord?.nakshatra || "?"} Nakshatra${house10Lord?.retrograde ? " [RETROGRADE]" : ""}${house10Lord?.combust ? " [COMBUST]" : ""}
-- **6th House (Ripu Bhava — Service/Competition)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${house6?.planets?.length ? house6.planets.join(", ") : "Empty"}
+- **6th House (Ripu Bhava — Service/Competition)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${safeHousePlanets(house6)}
 - **6th Lord Position**: ${house6Lord?.sign || "?"} in ${house6Lord?.house ?? "?"}th house${house6Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **7th House (Kalatra Bhava — Partnerships/Business)**: ${house7?.sign || "?"}, Lord: ${house7?.lord || "?"}, Occupants: ${house7?.planets?.length ? house7.planets.join(", ") : "Empty"}
+- **7th House (Kalatra Bhava — Partnerships/Business)**: ${house7?.sign || "?"}, Lord: ${house7?.lord || "?"}, Occupants: ${safeHousePlanets(house7)}
 - **7th Lord Position**: ${house7Lord?.sign || "?"} in ${house7Lord?.house ?? "?"}th house${house7Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **3rd House (Sahaja Bhava — Self-Effort/Communication)**: ${house3?.sign || "?"}, Lord: ${house3?.lord || "?"}, Occupants: ${house3?.planets?.length ? house3.planets.join(", ") : "Empty"}
+- **3rd House (Sahaja Bhava — Self-Effort/Communication)**: ${house3?.sign || "?"}, Lord: ${house3?.lord || "?"}, Occupants: ${safeHousePlanets(house3)}
 - **3rd Lord Position**: ${house3Lord?.sign || "?"} in ${house3Lord?.house ?? "?"}th house${house3Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **9th House (Dharma Bhava — Fortune/Higher Learning)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${house9?.planets?.length ? house9.planets.join(", ") : "Empty"}
+- **9th House (Dharma Bhava — Fortune/Higher Learning)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${safeHousePlanets(house9)}
 - **9th Lord Position**: ${house9Lord?.sign || "?"} in ${house9Lord?.house ?? "?"}th house${house9Lord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Wealth-Through-Career Houses
-- **2nd House (Accumulated Wealth)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${house2?.planets?.length ? house2.planets.join(", ") : "Empty"}
+- **2nd House (Accumulated Wealth)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${safeHousePlanets(house2)}
 - **2nd Lord Position**: ${house2Lord?.sign || "?"} in ${house2Lord?.house ?? "?"}th house${house2Lord?.retrograde ? " [RETROGRADE]" : ""}
-- **11th House (Gains/Income)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${house11?.planets?.length ? house11.planets.join(", ") : "Empty"}
+- **11th House (Gains/Income)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${safeHousePlanets(house11)}
 - **11th Lord Position**: ${house11Lord?.sign || "?"} in ${house11Lord?.house ?? "?"}th house${house11Lord?.retrograde ? " [RETROGRADE]" : ""}
 
 ### Career Significator Planets

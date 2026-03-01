@@ -1,48 +1,5 @@
 import { ChartData } from "../astro-client";
-
-/** Helper: format all planets into a detailed listing */
-function formatPlanets(planets: ChartData["planets"]): string {
-  if (!planets) return "Planetary data not available";
-  return Object.entries(planets)
-    .map(
-      ([name, p]) =>
-        `- **${name}**: ${p?.sign || "?"} (${p?.degrees?.toFixed(2) ?? "?"}°) in ${p?.house ?? "?"}th house, ` +
-        `${p?.nakshatra || "?"} Nakshatra Pada ${p?.pada ?? "?"}, Lord: ${p?.lord || "?"}` +
-        `${p?.retrograde ? " [RETROGRADE]" : ""}${p?.combust ? " [COMBUST]" : ""}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all 12 houses */
-function formatHouses(houses: ChartData["houses"]): string {
-  if (!houses) return "House data not available";
-  return Object.entries(houses)
-    .map(
-      ([num, h]) =>
-        `- **${num}th House**: ${h?.sign || "?"}, Lord: ${h?.lord || "?"}, ` +
-        `Occupants: ${h?.planets?.length > 0 ? h.planets.join(", ") : "Empty"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format dasha sequence */
-function formatDashaSequence(dashas: ChartData["dashas"]): string {
-  if (!dashas?.sequence) return "Dasha sequence not available";
-  return dashas.sequence
-    .map((d) => `- **${d?.planet || "?"}** Mahadasha: ${d?.start || "?"} → ${d?.end || "?"}`)
-    .join("\n");
-}
-
-/** Helper: format yogas */
-function formatYogas(yogas: ChartData["yogas"]): string {
-  if (!yogas || yogas.length === 0) return "No yogas detected";
-  return yogas
-    .map(
-      (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
+import { formatPlanets, formatHouses, formatDashaSequence, formatYogas } from "./_helpers";
 
 export default function transitRahuKetuPrompt(chartData: ChartData, language: "en" | "hi"): string {
   const { lagna, planets, houses, dashas, yogas } = chartData;

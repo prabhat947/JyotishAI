@@ -1,29 +1,5 @@
 import { ChartData } from "../astro-client";
-
-/** Helper: format all planets into a detailed listing */
-function formatPlanets(planets: ChartData["planets"]): string {
-  if (!planets) return "Planetary data not available";
-  return Object.entries(planets)
-    .map(
-      ([name, p]) =>
-        `- **${name}**: ${p?.sign || "?"} (${p?.degrees?.toFixed(2) ?? "?"}°) in ${p?.house ?? "?"}th house, ` +
-        `${p?.nakshatra || "?"} Nakshatra Pada ${p?.pada ?? "?"}, Lord: ${p?.lord || "?"}` +
-        `${p?.retrograde ? " [RETROGRADE]" : ""}${p?.combust ? " [COMBUST]" : ""}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all 12 houses */
-function formatHouses(houses: ChartData["houses"]): string {
-  if (!houses) return "House data not available";
-  return Object.entries(houses)
-    .map(
-      ([num, h]) =>
-        `- **${num}th House**: ${h?.sign || "?"}, Lord: ${h?.lord || "?"}, ` +
-        `Occupants: ${h?.planets?.length > 0 ? h.planets.join(", ") : "Empty"}`
-    )
-    .join("\n");
-}
+import { formatPlanets, formatHouses, formatYogas, formatAshtakavarga, safeHousePlanets } from "./_helpers";
 
 /** Helper: format yogas involving Jupiter */
 function formatJupiterYogas(yogas: ChartData["yogas"]): string {
@@ -42,29 +18,7 @@ function formatJupiterYogas(yogas: ChartData["yogas"]): string {
   return jupiterYogas
     .map(
       (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all yogas */
-function formatAllYogas(yogas: ChartData["yogas"]): string {
-  if (!yogas || yogas.length === 0) return "No yogas detected";
-  return yogas
-    .map(
-      (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format ashtakavarga */
-function formatAshtakavarga(ashtakavarga: ChartData["ashtakavarga"]): string {
-  if (!ashtakavarga) return "Ashtakavarga data not available";
-  return Object.entries(ashtakavarga)
-    .map(
-      ([planet, bindus]) =>
-        `- **${planet}**: [${bindus?.join(", ") || "?"}] (Aries to Pisces) Total: ${bindus?.reduce((a, b) => a + b, 0) ?? "?"}`
+        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${(Array.isArray(y?.planets) ? y.planets.join(", ") : String(y?.planets ?? "?"))} | Effect: ${y?.effect || "N/A"}`
     )
     .join("\n");
 }
@@ -138,16 +92,16 @@ ${formatPlanets(planets)}
 ${formatHouses(houses)}
 
 ### Jupiter-Related Houses
-- **5th House (Putra Bhava — Jupiter's joy)**: ${house5?.sign || "?"}, Lord: ${house5?.lord || "?"}, Occupants: ${house5?.planets?.length ? house5.planets.join(", ") : "Empty"}
-- **9th House (Dharma Bhava — Jupiter's own signification)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${house9?.planets?.length ? house9.planets.join(", ") : "Empty"}
-- **2nd House (Dhana Bhava — Jupiter as Dhana karaka)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${house2?.planets?.length ? house2.planets.join(", ") : "Empty"}
-- **11th House (Labha Bhava — Gains)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${house11?.planets?.length ? house11.planets.join(", ") : "Empty"}
+- **5th House (Putra Bhava — Jupiter's joy)**: ${house5?.sign || "?"}, Lord: ${house5?.lord || "?"}, Occupants: ${safeHousePlanets(house5)}
+- **9th House (Dharma Bhava — Jupiter's own signification)**: ${house9?.sign || "?"}, Lord: ${house9?.lord || "?"}, Occupants: ${safeHousePlanets(house9)}
+- **2nd House (Dhana Bhava — Jupiter as Dhana karaka)**: ${house2?.sign || "?"}, Lord: ${house2?.lord || "?"}, Occupants: ${safeHousePlanets(house2)}
+- **11th House (Labha Bhava — Gains)**: ${house11?.sign || "?"}, Lord: ${house11?.lord || "?"}, Occupants: ${safeHousePlanets(house11)}
 
 ### Yogas Involving Jupiter
 ${formatJupiterYogas(yogas)}
 
 ### All Detected Yogas (${yogas?.length ?? 0} total)
-${formatAllYogas(yogas)}
+${formatYogas(yogas)}
 
 ### Current Dasha Period
 - Mahadasha: ${dashas?.current?.mahadasha || "?"} (${dashas?.current?.mahadasha_start || "?"} to ${dashas?.current?.mahadasha_end || "?"})

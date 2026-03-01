@@ -1,37 +1,5 @@
 import { ChartData } from "../astro-client";
-
-/** Helper: format all planets into a detailed listing */
-function formatPlanets(planets: ChartData["planets"]): string {
-  if (!planets) return "Planetary data not available";
-  return Object.entries(planets)
-    .map(
-      ([name, p]) =>
-        `- **${name}**: ${p?.sign || "?"} (${p?.degrees?.toFixed(2) ?? "?"}°) in ${p?.house ?? "?"}th house, ` +
-        `${p?.nakshatra || "?"} Nakshatra Pada ${p?.pada ?? "?"}, Lord: ${p?.lord || "?"}` +
-        `${p?.retrograde ? " [RETROGRADE]" : ""}${p?.combust ? " [COMBUST]" : ""}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all 12 houses */
-function formatHouses(houses: ChartData["houses"]): string {
-  if (!houses) return "House data not available";
-  return Object.entries(houses)
-    .map(
-      ([num, h]) =>
-        `- **${num}th House**: ${h?.sign || "?"}, Lord: ${h?.lord || "?"}, ` +
-        `Occupants: ${h?.planets?.length > 0 ? h.planets.join(", ") : "Empty"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format dasha sequence */
-function formatDashaSequence(dashas: ChartData["dashas"]): string {
-  if (!dashas?.sequence) return "Dasha sequence not available";
-  return dashas.sequence
-    .map((d) => `- **${d?.planet || "?"}** Mahadasha: ${d?.start || "?"} to ${d?.end || "?"}`)
-    .join("\n");
-}
+import { formatPlanets, formatHouses, formatDashaSequence, formatYogas, formatAshtakavarga, safeHousePlanets } from "./_helpers";
 
 /** Helper: format yogas involving Saturn */
 function formatSaturnYogas(yogas: ChartData["yogas"]): string {
@@ -49,29 +17,7 @@ function formatSaturnYogas(yogas: ChartData["yogas"]): string {
   return saturnYogas
     .map(
       (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format all yogas */
-function formatAllYogas(yogas: ChartData["yogas"]): string {
-  if (!yogas || yogas.length === 0) return "No yogas detected";
-  return yogas
-    .map(
-      (y) =>
-        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${y?.planets?.join(", ") || "?"} | Effect: ${y?.effect || "N/A"}`
-    )
-    .join("\n");
-}
-
-/** Helper: format ashtakavarga */
-function formatAshtakavarga(ashtakavarga: ChartData["ashtakavarga"]): string {
-  if (!ashtakavarga) return "Ashtakavarga data not available";
-  return Object.entries(ashtakavarga)
-    .map(
-      ([planet, bindus]) =>
-        `- **${planet}**: [${bindus?.join(", ") || "?"}] (Aries to Pisces) Total: ${bindus?.reduce((a, b) => a + b, 0) ?? "?"}`
+        `- **${y?.name || "Unknown"}** [${y?.type || "?"}/${y?.strength || "?"}]: ${y?.description || "N/A"} | Planets: ${(Array.isArray(y?.planets) ? y.planets.join(", ") : String(y?.planets ?? "?"))} | Effect: ${y?.effect || "N/A"}`
     )
     .join("\n");
 }
@@ -148,16 +94,16 @@ ${formatPlanets(planets)}
 ${formatHouses(houses)}
 
 ### Saturn-Related Houses
-- **6th House (Enemies/Service)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${house6?.planets?.length ? house6.planets.join(", ") : "Empty"}
-- **8th House (Longevity/Transformation)**: ${house8?.sign || "?"}, Lord: ${house8?.lord || "?"}, Occupants: ${house8?.planets?.length ? house8.planets.join(", ") : "Empty"}
-- **10th House (Karma/Career — Saturn's Dig Bala)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${house10?.planets?.length ? house10.planets.join(", ") : "Empty"}
-- **12th House (Losses/Moksha)**: ${house12?.sign || "?"}, Lord: ${house12?.lord || "?"}, Occupants: ${house12?.planets?.length ? house12.planets.join(", ") : "Empty"}
+- **6th House (Enemies/Service)**: ${house6?.sign || "?"}, Lord: ${house6?.lord || "?"}, Occupants: ${safeHousePlanets(house6)}
+- **8th House (Longevity/Transformation)**: ${house8?.sign || "?"}, Lord: ${house8?.lord || "?"}, Occupants: ${safeHousePlanets(house8)}
+- **10th House (Karma/Career — Saturn's Dig Bala)**: ${house10?.sign || "?"}, Lord: ${house10?.lord || "?"}, Occupants: ${safeHousePlanets(house10)}
+- **12th House (Losses/Moksha)**: ${house12?.sign || "?"}, Lord: ${house12?.lord || "?"}, Occupants: ${safeHousePlanets(house12)}
 
 ### Yogas Involving Saturn
 ${formatSaturnYogas(yogas)}
 
 ### All Detected Yogas (${yogas?.length ?? 0} total)
-${formatAllYogas(yogas)}
+${formatYogas(yogas)}
 
 ### Vimshottari Dasha System
 - **Balance at Birth**: ${dashas?.balance_at_birth?.planet || "?"} Dasha — ${dashas?.balance_at_birth?.years ?? "?"}Y ${dashas?.balance_at_birth?.months ?? "?"}M ${dashas?.balance_at_birth?.days ?? "?"}D remaining
