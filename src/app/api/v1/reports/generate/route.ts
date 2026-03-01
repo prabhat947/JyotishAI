@@ -160,15 +160,27 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Save full content and chunk for RAG
-        await saveReportContent(supabase, report.id, profileId, fullContent, reportType);
+        // Save report content to DB (critical — do this before closing stream)
+        await supabase
+          .from("reports")
+          .update({
+            content: fullContent,
+            generation_status: "complete",
+          })
+          .eq("id", report.id);
 
-        // Enqueue PDF generation
-        await enqueuePDFGeneration(report.id);
-
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        // Signal completion to client immediately
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
         controller.close();
+
+        // Fire-and-forget: chunk + embed for RAG and enqueue PDF
+        // These are non-critical and should not block the client
+        processReportBackground(supabase, report.id, profileId, fullContent, reportType).catch(
+          (err) => console.error("[Report] Background processing failed:", err)
+        );
       } catch (error) {
+        console.error("[Report] Stream processing error:", error);
+
         // Send error event to client via SSE
         try {
           controller.enqueue(
@@ -200,41 +212,44 @@ export async function POST(request: NextRequest) {
   });
 }
 
-async function saveReportContent(
+/**
+ * Background processing: chunk + embed for RAG, enqueue PDF.
+ * Runs after the client stream is closed — failures are logged, not fatal.
+ */
+async function processReportBackground(
   supabase: any,
   reportId: string,
   profileId: string,
   content: string,
   reportType: string
 ) {
-  // Update report with content and mark as complete
-  await supabase
-    .from("reports")
-    .update({
-      content,
-      generation_status: "complete",
-    })
-    .eq("id", reportId);
+  // Chunk and embed for RAG (requires OPENROUTER_API_KEY)
+  try {
+    const chunks = chunkText(content, reportType);
+    const texts = chunks.map((c) => c.content);
+    const embeddings = await embedBatch(texts);
 
-  // Chunk and embed for RAG
-  const chunks = chunkText(content, reportType);
+    const chunkRecords = chunks.map((chunk, idx) => ({
+      report_id: reportId,
+      profile_id: profileId,
+      chunk_index: chunk.index,
+      content: chunk.content,
+      embedding: embeddings[idx],
+      metadata: {
+        ...chunk.metadata,
+        section_title: extractSectionTitle(chunk.content),
+      },
+    }));
 
-  // Extract embeddings
-  const texts = chunks.map((c) => c.content);
-  const embeddings = await embedBatch(texts);
+    await supabase.from("report_chunks").insert(chunkRecords);
+  } catch (err) {
+    console.error("[Report] RAG embedding failed (non-fatal):", err);
+  }
 
-  // Insert chunks with embeddings
-  const chunkRecords = chunks.map((chunk, idx) => ({
-    report_id: reportId,
-    profile_id: profileId,
-    chunk_index: chunk.index,
-    content: chunk.content,
-    embedding: embeddings[idx],
-    metadata: {
-      ...chunk.metadata,
-      section_title: extractSectionTitle(chunk.content),
-    },
-  }));
-
-  await supabase.from("report_chunks").insert(chunkRecords);
+  // Enqueue PDF generation (requires Redis)
+  try {
+    await enqueuePDFGeneration(reportId);
+  } catch (err) {
+    console.error("[Report] PDF queue failed (non-fatal):", err);
+  }
 }

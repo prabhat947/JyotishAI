@@ -65,7 +65,7 @@ export default function ProfileReportsPage() {
         .from('user_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         if (data.preferred_provider && data.preferred_model) {

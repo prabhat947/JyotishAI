@@ -182,8 +182,14 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Save messages to database
-        await supabase.from("chat_messages").insert([
+        // Send completion signal to client first
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ sources, sessionId: currentSessionId, done: true })}\n\n`)
+        );
+        controller.close();
+
+        // Save messages to database (fire-and-forget after stream closes)
+        supabase.from("chat_messages").insert([
           {
             session_id: currentSessionId,
             role: "user",
@@ -196,14 +202,10 @@ export async function POST(request: NextRequest) {
             sources,
             model_used: model || (provider === "openrouter" ? "google/gemini-2.0-flash" : "gemini-2.0-flash"),
           },
-        ]);
-
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ sources, sessionId: currentSessionId })}\n\n`)
-        );
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
+        ]).then(() => {}).catch((err: unknown) => console.error("[Chat] Save messages failed:", err));
       } catch (error) {
+        console.error("[Chat] Stream processing error:", error);
+
         // Send error event to client via SSE
         try {
           controller.enqueue(

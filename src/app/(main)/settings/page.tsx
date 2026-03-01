@@ -49,7 +49,7 @@ export default function SettingsPage() {
         .from("user_preferences")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setPrefs({
