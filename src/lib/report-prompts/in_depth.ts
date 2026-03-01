@@ -7,28 +7,28 @@ export default function inDepthPrompt(chartData: ChartData, language: "en" | "hi
 # Complete In-Depth Horoscope Analysis
 
 ## Personal Details
-- Lagna (Ascendant): ${lagna.sign} at ${lagna.degrees.toFixed(2)}°, Lord: ${lagna.lord}
-- Birth Nakshatra: ${planets.Moon.nakshatra}, Pada ${planets.Moon.pada}
+- Lagna (Ascendant): ${lagna?.sign || "Unknown"} at ${lagna?.degrees?.toFixed(2) ?? "N/A"}°, Lord: ${lagna?.lord || "Unknown"}
+- Birth Nakshatra: ${planets?.Moon?.nakshatra || "Unknown"}, Pada ${planets?.Moon?.pada ?? "N/A"}
 ${numerology ? `- Birth Number: ${numerology.birth_number}, Destiny Number: ${numerology.destiny_number}` : ""}
 
 ## All Planetary Positions
-${Object.entries(planets).map(([name, data]) =>
-  `- ${name}: ${data.sign} (${data.degrees.toFixed(2)}°) in ${data.house}th house, ${data.nakshatra} nakshatra${data.retrograde ? " (Retrograde)" : ""}`
-).join("\n")}
+${planets ? Object.entries(planets).map(([name, data]) =>
+  `- ${name}: ${data?.sign || "Unknown"} (${data?.degrees?.toFixed(2) ?? "N/A"}°) in ${data?.house ?? "?"}th house, ${data?.nakshatra || "Unknown"} nakshatra${data?.retrograde ? " (Retrograde)" : ""}`
+).join("\n") : "Planetary data not available"}
 
 ## House Analysis
-${Object.entries(houses).map(([num, data]) =>
-  `- ${num}th House: ${data.sign}, Lord ${data.lord}, Planets: ${data.planets.length > 0 ? data.planets.join(", ") : "Empty"}`
-).join("\n")}
+${houses ? Object.entries(houses).map(([num, data]) =>
+  `- ${num}th House: ${data?.sign || "Unknown"}, Lord ${data?.lord || "Unknown"}, Planets: ${data?.planets?.length > 0 ? data.planets.join(", ") : "Empty"}`
+).join("\n") : "House data not available"}
 
 ## Vimshottari Dasha
-- Balance at Birth: ${dashas.balance_at_birth.planet} ${dashas.balance_at_birth.years}Y ${dashas.balance_at_birth.months}M ${dashas.balance_at_birth.days}D
-- Current Period: ${dashas.current.mahadasha} - ${dashas.current.antardasha}
+- Balance at Birth: ${dashas?.balance_at_birth?.planet || "Unknown"} ${dashas?.balance_at_birth?.years ?? "?"}Y ${dashas?.balance_at_birth?.months ?? "?"}M ${dashas?.balance_at_birth?.days ?? "?"}D
+- Current Period: ${dashas?.current?.mahadasha || "Unknown"} - ${dashas?.current?.antardasha || "Unknown"}
 - Next 5 Major Periods:
-${dashas.sequence.slice(0, 5).map(d => `  ${d.planet}: ${d.start} to ${d.end}`).join("\n")}
+${dashas?.sequence?.slice(0, 5)?.map(d => `  ${d.planet}: ${d.start} to ${d.end}`).join("\n") || "  Dasha sequence not available"}
 
-## Detected Yogas (${yogas.length} total)
-${yogas.map(y => `- **${y.name}** (${y.type}, ${y.strength}): ${y.description}`).join("\n")}
+## Detected Yogas (${yogas?.length ?? 0} total)
+${yogas?.map(y => `- **${y.name}** (${y.type}, ${y.strength}): ${y.description}`).join("\n") || "No yogas detected"}
 
 ## Analysis Request
 This is the most comprehensive report. Provide an exhaustive 50+ page analysis covering:

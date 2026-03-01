@@ -3,21 +3,26 @@ import { ChartData } from "../astro-client";
 export default function wealthPrompt(chartData: ChartData, language: "en" | "hi"): string {
   const { lagna, planets, houses, dashas, yogas } = chartData;
 
+  const house2 = houses?.["2"];
+  const house11 = houses?.["11"];
+  const house2Lord = house2?.lord ? planets?.[house2.lord] : undefined;
+  const house11Lord = house11?.lord ? planets?.[house11.lord] : undefined;
+
   return `
 # Wealth & Fortune Horoscope Analysis
 
 ## Birth Chart Data
-- Lagna: ${lagna.sign}
-- 2nd House (Wealth): ${houses["2"].sign}, Lord: ${houses["2"].lord}, Position: ${planets[houses["2"].lord]?.sign} in ${planets[houses["2"].lord]?.house}th
-- 11th House (Gains): ${houses["11"].sign}, Lord: ${houses["11"].lord}, Position: ${planets[houses["11"].lord]?.sign} in ${planets[houses["11"].lord]?.house}th
-- Jupiter (Karaka): ${planets.Jupiter.sign} in ${planets.Jupiter.house}th house, ${planets.Jupiter.nakshatra}
-- Venus (Luxury): ${planets.Venus.sign} in ${planets.Venus.house}th house
+- Lagna: ${lagna?.sign || "Unknown"}
+- 2nd House (Wealth): ${house2?.sign || "Unknown"}, Lord: ${house2?.lord || "Unknown"}, Position: ${house2Lord?.sign || "Unknown"} in ${house2Lord?.house ?? "?"}th
+- 11th House (Gains): ${house11?.sign || "Unknown"}, Lord: ${house11?.lord || "Unknown"}, Position: ${house11Lord?.sign || "Unknown"} in ${house11Lord?.house ?? "?"}th
+- Jupiter (Karaka): ${planets?.Jupiter?.sign || "Unknown"} in ${planets?.Jupiter?.house ?? "?"}th house, ${planets?.Jupiter?.nakshatra || "Unknown"}
+- Venus (Luxury): ${planets?.Venus?.sign || "Unknown"} in ${planets?.Venus?.house ?? "?"}th house
 
 ## Dhana Yogas (Wealth Combinations)
-${yogas.filter(y => y.type === "dhana" || y.name.includes("Wealth") || y.name.includes("Dhana")).map(y => `- ${y.name}: ${y.description} (Strength: ${y.strength})`).join("\n")}
+${yogas?.filter(y => y.type === "dhana" || y.name?.includes("Wealth") || y.name?.includes("Dhana")).map(y => `- ${y.name}: ${y.description} (Strength: ${y.strength})`).join("\n") || "No specific dhana yogas detected"}
 
 ## Current Dasha
-- ${dashas.current.mahadasha} - ${dashas.current.antardasha}
+- ${dashas?.current?.mahadasha || "Unknown"} - ${dashas?.current?.antardasha || "Unknown"}
 
 ## Analysis Request
 Provide comprehensive wealth and financial fortune analysis covering:
